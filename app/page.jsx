@@ -9,11 +9,16 @@ export const dynamic = 'force-dynamic'
 
 export default async function Homepage() {
 	const {userId} = auth()
-	const user = await currentUser()
 
-	const {rows} = await sql`SELECT * FROM posts;`
+	const [
+		user,
+		{rows}
+	] = await Promise.all([
+		currentUser(),
+		sql`SELECT * FROM posts;`
+	])
 
-	async function postSomething (formData) {
+	async function postSomething(formData) {
 		'use server'
 
 		const {userId} = auth()
@@ -28,9 +33,21 @@ export default async function Homepage() {
 			${Math.round(Date.now()/1000)},
 			${userId}
 		);`
-
 		revalidatePath('/')
-		// TODO maybe refresh
+	}
+
+	async function deletePost(formData) {
+		'use server'
+
+		const {userId} = auth()
+		if (!userId) return 'error_signed_out'
+
+		const pID = formData.get('postid')
+
+		// TODO make sure the post is owned by the user
+
+		await sql`DELETE FROM posts WHERE id=${pID};`
+		revalidatePath('/')
 	}
 
 	return <>
@@ -40,12 +57,20 @@ export default async function Homepage() {
 
 		{rows.map(row => <div key={row.id}>
           	{row.text}
+
+		  	{row.userid==userId && <form action={deletePost}>
+				<input type='hidden' value={row.id} name='postid'/>
+				<button type='submit' className='text-[purple]'>
+					[x]
+				</button>
+			</form>}
         </div>)}
 
 		{
 			userId ? <>
 				<form action={postSomething} className='border-2'>
 					<input type='text' placeholder='Something nice' name='content'/>
+
 					<button type='submit' className='btn'>
 						Post
 					</button>
