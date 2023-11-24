@@ -9,3 +9,11 @@ body {
 .cl-signIn-root, .cl-signUp-root {
 	@apply mx-auto;
 }
+
+.btn {
+	@apply bg-[#9147ff] p-2 rounded text-[20px] font-semibold;
+}
+
+input {
+	@apply bg-black border-[1px];
+}
